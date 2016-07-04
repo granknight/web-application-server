@@ -1,11 +1,8 @@
 package webserver;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.file.Files;
-import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,20 +24,9 @@ public class RequestHandler extends Thread {
 
 
 		try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-			//log.debug(hostString);
 
-			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-			String header = "";
-			String line = reader.readLine();
-			while(!"".equals(line)){
-				if(line == null){
-					return;
-				}
-
-				header += line;
-				header +="\r\n";
-				line = reader.readLine();
-			}
+			String header = getHeaderString(in);
+			if (header == null) return;
 
 			log.debug("HEADER : " + header);
 
@@ -58,8 +44,8 @@ public class RequestHandler extends Thread {
 			//String file = url.replace("/", "");
 
 			String getParam = "";
-			log.debug("Accept contentType : "+ contentType);
-			log.debug("url  : " + url);
+			//log.debug("Accept contentType : "+ contentType);
+			//log.debug("url  : " + url);
 			//log.debug("fileName : " + file);
 
 			if(url.contains("?")){
@@ -86,6 +72,22 @@ public class RequestHandler extends Thread {
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
+	}
+
+	private String getHeaderString(InputStream in) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		String header = "\r\n";
+		String line = reader.readLine();
+		while(!"".equals(line)){
+            if(line == null){
+				return null;
+            }
+
+            header += line;
+            header +="\r\n";
+            line = reader.readLine();
+        }
+		return header;
 	}
 
 	private void response200Header(DataOutputStream dos, long lengthOfBodyContent,String contentType) {
